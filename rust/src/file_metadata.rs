@@ -36,7 +36,7 @@ use std::ptr::{self, NonNull};
 
 #[derive(PartialEq, Eq, Hash)]
 pub struct FileMetadata {
-    pub(crate) handle: *mut BNFileMetadata,
+    pub handle: *mut BNFileMetadata,
 }
 
 impl FileMetadata {
