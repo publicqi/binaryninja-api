@@ -117,6 +117,10 @@ public:
 
 class LinearView;
 
+class QHBoxLayout;
+class QVBoxLayout;
+class QResizeEvent;
+
 class StickyHeader: public QWidget
 {
 	RenderContext m_render;
@@ -128,6 +132,11 @@ class StickyHeader: public QWidget
 	LinearViewLine m_line;
 	BinaryNinja::FunctionViewType m_viewType;
 	QProgressIndicator* m_updateIndicator;
+	QHBoxLayout* m_mainLayout = nullptr;
+	QVBoxLayout* m_indicatorLayout = nullptr;
+
+	void updateIndicatorIcon();
+	void updateIndicatorPosition();
 
 public:
 	StickyHeader(BinaryViewRef data, LinearView* parent);
@@ -135,8 +144,10 @@ public:
 	void updateLine(const LinearViewLine& line);
 	void updateViewType(const BinaryNinja::FunctionViewType& viewType);
 	void updateFonts();
+	void updateTheme();
 
 	virtual void paintEvent(QPaintEvent* event) override;
+	virtual void resizeEvent(QResizeEvent* event) override;
 };
 
 
@@ -187,29 +198,34 @@ class BINARYNINJAUIAPI LinearView : public QAbstractScrollArea, public View, pub
 
 	BinaryViewRef m_data;
 	ViewFrame* m_view;
-	uint64_t m_allocatedLength;
+	uint64_t m_allocatedLength = 0;
 
-	StickyHeader* m_header;
+	StickyHeader* m_header = nullptr;
 	RenderContext m_render;
-	int m_cols, m_rows;
-	uint64_t m_scrollBarMultiplier;
-	int m_wheelDelta;
-	bool m_updatingScrollBar;
+	int m_cols = 0;
+	int m_rows = 0;
+	uint64_t m_scrollBarMultiplier = 0;
+	int m_wheelDelta = 0;
+	bool m_updatingScrollBar = false;
 
-	std::atomic<bool> m_updatesRequired;
-	bool m_updateBounds;
+	std::atomic<bool> m_updatesRequired = false;
+	bool m_updateBounds = false;
 
 	LinearViewCursorPosition m_cursorPos, m_selectionStartPos;
-	bool m_cursorAscii;
+	bool m_cursorAscii = false;
 	bool m_tokenSelection = false;
 	HighlightTokenState m_highlight;
 	bool m_displayCollapseIndicators = false;
-	uint64_t m_navByRefTarget;
+	uint64_t m_navByRefTarget = 0;
 	bool m_navByRef = false;
 	bool m_doubleClickLatch = false;
 	FunctionRef m_relatedHighlightFunction;
 	std::set<size_t> m_relatedIndexHighlights;
 	std::set<uint64_t> m_relatedInstructionHighlights;
+
+	void updateStickyHeaderLine();
+	void updateStickyHeaderVisibility();
+	bool shouldShowStickyHeader() const;
 
 	SettingsRef m_settings;
 	DisassemblySettingsRef m_options;
@@ -217,19 +233,19 @@ class BINARYNINJAUIAPI LinearView : public QAbstractScrollArea, public View, pub
 	HexEditorHighlightState m_highlightState;
 	bool m_singleFunctionView = false;
 
-	InstructionEdit* m_instrEdit;
+	InstructionEdit* m_instrEdit = nullptr;
 
-	BNAddressRange m_cacheBounds;
+	BNAddressRange m_cacheBounds = { 0, 0 };
 	std::vector<BNAddressRange> m_cachedRegions;
 	std::shared_mutex m_cacheMutex;
 	BinaryNinja::Ref<BinaryNinja::LinearViewCursor> m_topPosition, m_bottomPosition;
 	std::vector<LinearViewLine> m_lines;
-	size_t m_emptyPrevCursors;
-	size_t m_emptyNextCursors;
-	size_t m_topLine;
+	size_t m_emptyPrevCursors = 0;
+	size_t m_emptyNextCursors = 0;
+	size_t m_topLine = 0;
 	std::optional<double> m_topOrderingIndexOffset;
 
-	QTimer* m_hoverTimer;
+	QTimer* m_hoverTimer = nullptr;
 	QPointF m_previewPos;
 
 	ContextMenuManager* m_contextMenuManager;
@@ -237,7 +253,7 @@ class BINARYNINJAUIAPI LinearView : public QAbstractScrollArea, public View, pub
 
 	std::map<FunctionRef, BinaryNinja::AdvancedFunctionAnalysisDataRequestor> m_analysisRequestors;
 
-	std::string m_navigationMode = "";
+	std::string m_navigationMode;
 
 	ClickableIcon* m_dataButton = nullptr;
 	QWidget* m_dataButtonContainer = nullptr;
@@ -378,6 +394,7 @@ private Q_SLOTS:
 	void makeFloat64();
 	void toggleFloatSize();
 	void makePtr();
+	bool canMakeString(size_t charSize);
 	void makeString(size_t charSize = 1);
 	void changeType(const UIActionContext& context);
 	void undefineInRange();
@@ -489,13 +506,16 @@ public:
 	virtual StatusBarWidget* getStatusBarWidget() override;
 	virtual ViewPaneHeaderSubtypeWidget* getHeaderSubtypeWidget() override;
 	virtual QWidget* getHeaderOptionsWidget() override;
+	virtual void updateTheme() override;
 
 	virtual void followPointer();
 
 	virtual bool canCopyWithTransform() override;
+	virtual bool canCut() override;
 	virtual void cut() override;
 	virtual void copy(TransformRef xform = nullptr) override;
 	virtual void paste(TransformRef xform = nullptr) override;
+	virtual bool canPaste() override;
 	virtual void copyAddress() override;
 
 	virtual HighlightTokenState getHighlightTokenState() override { return m_highlight; }
@@ -576,6 +596,9 @@ protected:
 	bool canExtendSelectionToEndOfSegment();
 	bool canExtendSelectionToStartOfDataVariable();
 	bool canExtendSelectionToEndOfDataVariable();
+
+	virtual bool shouldShowCopyAsActions();
+	virtual bool shouldShowTransformActions();
 };
 
 /*!

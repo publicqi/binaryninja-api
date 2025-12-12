@@ -114,7 +114,7 @@ Binary Ninja provides a flexible API for creating and defining types explicitly.
 There are a number of different type objects available for creation:
 
 - Integer Types
-- Characters Types (technically an integer)
+- ~~Characters Types (technically an integer)~~ ([just a 1-byte signed integer](https://github.com/Vector35/binaryninja-api/issues/5355))
 - Wide Characters Types (also technically an integer)
 - Boolean (guess what? also technically an integer)
 - Float Types (definitely not an integer)
@@ -238,6 +238,49 @@ StructureType.create(members=[(Type.int(4), 'field_0'), (Type.int(4), 'field_4')
 StructureType.create(members=[(Type.int(4), 'field_0')], type=StructureVariant.ClassStructureType)
 ```
 
+#### Create Bitfields in a Structure
+
+To create a bitfield in a structure, you can use the `bit_position` and `bit_width` parameters when inserting a member at an offset.
+
+```pycon
+>>> t = TypeBuilder.structure()
+>>> t.insert(0, Type.int(4), "field_0")
+>>> t.insert(4, Type.int(4), "bitfield_1", bit_width=4)
+>>> t.insert(4, Type.int(4), "bitfield_2", bit_position=4, bit_width=4)
+>>> t.members
+[<int32_t field_0, offset 0x0>, <int32_t bitfield_1, offset 0x4, bit 0:4>, <int32_t bitfield_2, offset 0x4, bit 4:4>]
+```
+
+It is important to note the distinction between the `bit_position` and `offset` parameters. The `offset` is a byte offset
+from the start of the structure, and the `bit_position` is the bit from the start of byte offset the member resides at, `bit_position` **cannot** be greater than `7`. The reason member
+offsets are byte offsets instead of bit offsets is historical, previous versions of Binary Ninja had no concept of bitwise
+structures.
+
+For example, if you have a structure with the following members:
+
+```c
+struct SmallFuncHeader __packed
+{
+    uint32_t offset : 25;
+    uint32_t paramCount : 7;
+    uint32_t bytecodeSizeInBytes : 15;
+    uint32_t functionName : 17;
+};
+```
+
+This can be constructed in Python like so:
+
+```pycon
+>>> t = TypeBuilder.structure(packed=True)
+... t.insert(0, Type.int(4, False), "offset", bit_position=0, bit_width=25)
+... t.insert(3, Type.int(4, False), "paramCount", bit_position=1, bit_width=7)
+... t.insert(4, Type.int(4, False), "bytecodeSizeInBytes", bit_position=0, bit_width=15)
+... t.insert(5, Type.int(4, False), "functionName", bit_position=7, bit_width=17)
+... t.members
+... 
+[<uint32_t offset, offset 0x0, bit 0:25>, <uint32_t paramCount, offset 0x3, bit 1:7>, <uint32_t bytecodeSizeInBytes, offset 0x4, bit 0:15>, <uint32_t functionName, offset 0x5, bit 7:17>]
+```
+
 #### Create Enumerations
 
 ```python
@@ -308,7 +351,7 @@ Here's a few useful concepts when working Binary Ninja's type system.
 
 In Binary Ninja the name of a class/struct/union or enumeration is separate from its type definition. This
 is much like how it's done in C. The mapping between a structure's definition and its name is kept in the Binary View.
-Thus if we want to associate a name with our type we need an extra step.
+Thus, if we want to associate a name with our type we need an extra step.
 
 ```python
 bv.define_user_type('Foo', Type.structure(members=[(Type.int(4), 'field_0')]))
@@ -356,7 +399,7 @@ struct Bas
 
 #### Mutable Types
 
-As `Type` objects are immutable, the Binary Ninja API provides a pure python implementation of types to provide mutability, these all inherit from `MutableType` and keep the same names as their immutable counterparts minus the `Type` part. Thus `Structure` is the mutable version of `StructureType` and `Enumeration` is the mutable version of `MutableType`. `Type` objects can be converted to `MutableType` objects using the `Type.mutable_copy` API and, `MutableType` objects can be converted to `Type` objects through the `MutableType.immutable_copy` API. Generally speaking you shouldn't need the mutable type variants for anything except creation of structures and enumerations, mutable type variants are provided for convenience and consistency. Building and defining a new structure can be done in a few ways. The first way would be the two step process of creating the structure then defining it.
+As `Type` objects are immutable, the Binary Ninja API provides a pure python implementation of types to provide mutability, these all inherit from `MutableType` and keep the same names as their immutable counterparts minus the `Type` part. Thus, `Structure` is the mutable version of `StructureType` and `Enumeration` is the mutable version of `MutableType`. `Type` objects can be converted to `MutableType` objects using the `Type.mutable_copy` API and, `MutableType` objects can be converted to `Type` objects through the `MutableType.immutable_copy` API. Generally speaking you shouldn't need the mutable type variants for anything except creation of structures and enumerations, mutable type variants are provided for convenience and consistency. Building and defining a new structure can be done in a few ways. The first way would be the two-step process of creating the structure then defining it.
 
 ```python
 s = StructureBuilder.create(members=[(IntegerType.create(4), 'field_0')])
@@ -373,7 +416,7 @@ s.append(IntegerType.create(4))
 bv.define_user_type('Foo', s)
 ```
 
-Finally you can use the built-in context manager which automatically registers the created type with the provided `BinaryView` (`bv`) and name(`Foo`). Additionally when creating TypeLibraries a `Type` can be passed instead of a `BinaryView`
+Finally, you can use the built-in context manager which automatically registers the created type with the provided `BinaryView` (`bv`) and name(`Foo`). Additionally, when creating TypeLibraries a `Type` can be passed instead of a `BinaryView`
 
 ```python
 with StructureBuilder.builder(bv, 'Foo') as s:
@@ -412,7 +455,7 @@ There are 3 categories of object which can have `Type` objects applied to them.
 * Variables (i.e. local variables)
 * DataVariables (i.e. global variables)
 
-As of the 3.0 API its much easier to apply types to Variables and DataVariables
+As of the 3.0 API it's much easier to apply types to Variables and DataVariables
 
 #### Applying a type to a `Function`
 
@@ -463,13 +506,13 @@ Importing a header goes through the same code path as parsing source directly. Y
 (<types: [...], variables: [...], functions: [...]>, [])
 ```
 
-Using these APIs will give you a Python object with all of the results, but won't actually apply them to the analysis in any way. If you want to replicate the importing behavior seen in the UI widget, there are a few additional steps you will need to take:
+Using these APIs will give you a Python object with all the results, but won't actually apply them to the analysis in any way. If you want to replicate the importing behavior seen in the UI widget, there are a few additional steps you will need to take:
 
 1. Use `BinaryView.define_user_types()` to add all the created types to the analysis
-1. Update the function and data variable types
+2. Update the function and data variable types
     1. Look up matching functions and symbols by using `BinaryView.get_symbol_by_raw_name`. Also look up potentially modified function names starting with `_` or `__`
-    1. Once you have found a function whose name matches one found in the header file, set its type using `Function.type = ftype`
-    1. Similarly for Data Variables, once one is found with a matching name, set its type using `DataVariable.type = dvtype`
+    2. Once you have found a function whose name matches one found in the header file, set its type using `Function.type = ftype`
+    3. Similarly for Data Variables, once one is found with a matching name, set its type using `DataVariable.type = dvtype`
 
 #### Exporting a Header
 

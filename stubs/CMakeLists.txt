@@ -1,18 +1,17 @@
 cmake_minimum_required(VERSION 3.19 FATAL_ERROR)
 project(binaryninjacore_stubs)
 
-if(WIN32)
-	set(PYTHON_COMMAND "py -3")
-else()
-	set(PYTHON_COMMAND "python3")
-endif()
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 file(REAL_PATH "${PROJECT_SOURCE_DIR}/../" ABSOLUTE_API_PATH)
+
+# Remove long path prefix because it makes cl.exe very angry
+string(REGEX REPLACE "^//\\?/" "" ABSOLUTE_API_PATH "${ABSOLUTE_API_PATH}")
 
 # Generate stubs.cpp with implementations of all the BNAPI functions
 add_custom_command(
     OUTPUT ${PROJECT_BINARY_DIR}/stubs.cpp
-    COMMAND ${PYTHON_COMMAND} ${PROJECT_SOURCE_DIR}/generate_stubs.py ${ABSOLUTE_API_PATH}/binaryninjacore.h ${PROJECT_BINARY_DIR}
+    COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/generate_stubs.py ${ABSOLUTE_API_PATH}/binaryninjacore.h ${PROJECT_BINARY_DIR}
     DEPENDS ${PROJECT_SOURCE_DIR}/generate_stubs.py ${ABSOLUTE_API_PATH}/binaryninjacore.h
     COMMENT "Generating stubs.cpp from binaryninjacore.h"
 )
@@ -28,7 +27,7 @@ set_target_properties(binaryninjacore_stubs
     CXX_STANDARD_REQUIRED ON
     VISIBILITY_INLINES_HIDDEN ON
     POSITION_INDEPENDENT_CODE ON
-    ARCHIVE_OUTPUT_DIRECTORY $<1:${PROJECT_BINARY_DIR}>
+    ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}"
 )
 
 target_include_directories(binaryninjacore_stubs PUBLIC ${ABSOLUTE_API_PATH})

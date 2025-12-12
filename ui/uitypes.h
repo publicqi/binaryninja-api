@@ -6,14 +6,14 @@
 // there are changes to the API that affect linking, including new functions,
 // new types, modifications to existing functions or types, or new versions
 // of the Qt libraries.
-#define BN_CURRENT_UI_ABI_VERSION 11
+#define BN_CURRENT_UI_ABI_VERSION 12
 
 // Minimum ABI version that is supported for loading of plugins. Plugins that
 // are linked to an ABI version less than this will not be able to load and
 // will require rebuilding. The minimum version is increased when there are
 // incompatible changes that break binary compatibility, such as changes to
 // existing types or functions, or a new version of Qt.
-#define BN_MINIMUM_UI_ABI_VERSION 11
+#define BN_MINIMUM_UI_ABI_VERSION 12
 
 #ifdef __GNUC__
 	#ifdef BINARYNINJAUI_LIBRARY
@@ -108,6 +108,8 @@ typedef BinaryNinja::Ref<BinaryNinja::Tag> TagRef;
 typedef BinaryNinja::Ref<BinaryNinja::TagType> TagTypeRef;
 typedef BinaryNinja::Ref<BinaryNinja::TemporaryFile> TemporaryFileRef;
 typedef BinaryNinja::Ref<BinaryNinja::Transform> TransformRef;
+typedef BinaryNinja::Ref<BinaryNinja::TransformContext> TransformContextRef;
+typedef BinaryNinja::Ref<BinaryNinja::TransformSession> TransformSessionRef;
 typedef BinaryNinja::Ref<BinaryNinja::Type> TypeRef;
 typedef BinaryNinja::Ref<BinaryNinja::TypeArchive> TypeArchiveRef;
 typedef BinaryNinja::Ref<BinaryNinja::TypeLibrary> TypeLibraryRef;

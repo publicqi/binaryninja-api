@@ -108,11 +108,11 @@ def demangle_llvm(mangled_name: str, options: Optional[Union[bool, binaryview.Bi
 	:type options: Optional[Union[bool, BinaryView]]
 	:return: returns demangled name or None on error
 	:rtype: Optional[List[str]]
- 	:Example:
+	:Example:
 
-   		>>> demangle_llvm("?testf@Foobar@@SA?AW4foo@1@W421@@Z")
+		>>> demangle_llvm("?testf@Foobar@@SA?AW4foo@1@W421@@Z")
 		['public: static enum Foobar::foo __cdecl Foobar::testf(enum Foobar::foo)']
-  		>>>
+		>>>
 	"""
 	outName = ctypes.POINTER(ctypes.c_char_p)()
 	outSize = ctypes.c_ulonglong()
@@ -131,7 +131,10 @@ def demangle_llvm(mangled_name: str, options: Optional[Union[bool, binaryview.Bi
 	)
 	):
 		for i in range(outSize.value):
-			names.append(outName[i].decode('utf8'))  # type: ignore
+			try:
+				names.append(outName[i].decode('utf8'))  # type: ignore
+			except UnicodeDecodeError:
+				names.append(outName[i].decode('charmap'))  # type: ignore
 		core.BNFreeDemangledName(ctypes.byref(outName), outSize.value)
 		return names
 	return None

@@ -16,7 +16,7 @@ Binaries are installed in the following locations by default:
 - Windows (user install): `%LOCALAPPDATA%\Vector35\BinaryNinja`
 
 ???+ Tip "Tip"
-    If you want a silent install on Windows, because we use the [NSIS](https://nsis.sourceforge.io/Docs/) installer, simply use: `BinaryNinjaInstaller.exe /S`
+    If you want a silent installation on Windows, because we use the [NSIS](https://nsis.sourceforge.io/Docs/) installer, simply use: `BinaryNinjaInstaller.exe /S`
 
 ???+ Danger "Warning"
     Do not put any user content in the install-path of Binary Ninja. The auto-update process of Binary Ninja WILL remove any files included in these locations.
@@ -31,7 +31,7 @@ While the default user folders are listed below, you can override these paths on
 
 The contents of the user folder includes:
 
-- `lastrun`: A text file containing the directory of the last Binary Ninja binary path -- very useful for plugins to resolve the install locations in non-default settings or on Linux
+- `lastrun`: A text file containing the directory of the last Binary Ninja binary path -- very useful for plugins to resolve the installation locations in non-default settings or on Linux
 - `license.dat`: License file
 - `plugins/`: Folder containing all manually installed user plugins
 - `repositories/`: Folder containing files and plugins managed by the [Plugin Manager API](https://api.binary.ninja/binaryninja.pluginmanager-module.html)
@@ -55,7 +55,7 @@ The following files and folders may be created in the user folder but are not cr
 
 Some settings such as window locations, saved checkboxes, recent file lists, disassembly settings, dialog histories are stored in `QSettings`. Note that the `BN_QSETTINGS_POSTFIX` environment variable can be used to temporarily use a different QSetting file which is useful for different profiles or testing purposes.
 
-If you ever have the need to flush these, you can find the install locations as described in the [QT documentation](https://doc.qt.io/qt-6/qsettings.html#platform-specific-notes).
+If you ever have the need to flush these, you can find the installation locations as described in the [QT documentation](https://doc.qt.io/qt-6/qsettings.html#platform-specific-notes).
 
 ## License
 
@@ -67,11 +67,9 @@ Once the license key is installed, you can change it, back it up, or otherwise i
 
 ## Linux Setup
 
-Because Linux install locations can vary widely, we do not assume that Binary Ninja has been installed in any particular folder on Linux. Rather, you can simply run `binaryninja/scripts/linux-setup.sh` after extracting the zip and various file associations, icons, and other settings will be set up. Run it with `-h` to see the customization options.
+Because Linux installation locations can vary widely, we do not assume that Binary Ninja has been installed in any particular folder on Linux. Rather, you can simply run `binaryninja/scripts/linux-setup.sh` after extracting the zip and various file associations, icons, and other settings will be set up. Run it with `-h` to see the customization options.
 
 ## Loading Files
-
-![open with options ><](../img/open-with-options.png "Open with Options"){ width="600" }
 
 You can load files in many ways:
 
@@ -79,7 +77,7 @@ You can load files in many ways:
 2. Use the `File/Open` menu or `Open` button on the start screen (`[CMD/CTRL] o`)
 3. Use the `File/Open with Options` menu which allows you to customize the analysis options (`[CMD/CTRL-SHIFT] o`)
 4. Open a file from the Triage picker (`File/Open for Triage`) which enables several minimal analysis options and shows a summary view first
-5. Click an item in the recent files list (hold `[CMD/CTRL-SHIFT]` while clicking to use the `Open with Options` workflow)
+5. Click an item in the recent files list (hold `[CMD/CTRL-SHIFT]` while clicking to use the `Open with Options` workflow, or use the right-click menu)
 6. Press the number key associated with an item from the recent files list (0-9, where 0 represents file 10 on the recent list, optionally holding `[CMD/CTRL-SHIFT]` to use the `Open with Options` workflow)
 7. Run Binary Ninja with an optional command-line parameter
 8. Open a file from a URL via the `[CMD/CTRL] l` hotkey
@@ -91,6 +89,87 @@ You can load files in many ways:
     * URLs For referencing remote files either the URL should be prefixed with `binaryninja:` and optionally suffixed with the `expr` query parameter
         * `binaryninja:file://<remote_path>?expr=[.data + 400]` - Download the remote file and navigate to the address at `.data` plus `0x400`
 
+### Opening With Options
+
+![open with options ><](../img/open-with-options.png "Open with Options"){ width="600" }
+
+While Binary Ninja defaults to opening most files with sane defaults without prompting, there are many situations where you wish to specify more details. Additionally, if you are attempting to load a file format without a loader, you will also be presented with the same dialog to specify information such as the base load address and default architecture.
+
+Items 1, 3, 5, 6 in the above list all describe methods you can use to override the default settings and request an "Open with Options" dialog.
+
+### Container Browser
+
+![container browser](../img/container-browser.png "Container Browser"){ width="800" }
+
+The Container Browser provides an interactive way to explore and extract files from container formats such as ZIP archives, encrypted containers, and other nested file structures. When opening files that contain nested content, Binary Ninja can automatically detect and decode these containers, presenting a hierarchical tree view of all available files.
+
+Binary Ninja includes built-in support for the following container formats:
+
+- **Zip**: ZIP archives (including password-protected)
+- **Gzip**: Gzip compressed files
+- **Zlib**: Zlib compressed data
+- **CaRT**: Custom archive format for malware analysis with metadata support
+- **IntelHex**: Intel HEX format files
+- **SRec**: Motorola S-record format files
+- **TiTxt**: Texas Instruments TXT format
+- **IMG4**: Apple IMG4 container format
+- **LZFSE**: Apple LZFSE compressed data
+
+#### Container Detection Modes
+
+Binary Ninja offers three container detection modes, configurable via the [`files.container.mode`](settings.md#files.container.mode) setting:
+
+- **Full** (default): Automatically discovers all nested paths and builds a complete context tree before requesting user selection. This mode provides the most complete view of the container structure upfront.
+- **Interactive**: Requires user interaction at each level of the container hierarchy. This mode is useful when working with deeply nested containers or when you want more control over the extraction process.
+- **Disabled**: Opens the file as-is without attempting to unwrap container formats.
+
+#### Working with Containers
+
+When you open a container file in Full or Interactive mode, the Container Browser dialog displays:
+
+- **Name**: The file or entry name within the container
+- **Type**: The detected format
+- **Size**: File size in bytes
+- **Path**: The hierarchical path within the container structure
+
+The browser supports:
+
+- **Filtering**: Use the search box at the top to filter by name, type, or path
+- **Password Protection**: Binary Ninja will attempt common passwords (configurable via [`files.container.defaultPasswords`](settings.md#files.container.defaultPasswords)) before prompting for manual entry
+- **Custom Extraction**: Right-click any entry to access "Extract With" options, allowing you to apply different transforms (Base64, Hex, etc.) to decode content
+- **Metadata Display**: For containers that include embedded metadata, the associated information is displayed in the preview pane on the right.
+
+#### Virtual Paths
+
+Files opened through the Container Browser maintain a virtual path that tracks the full extraction chain. For example:
+
+```python
+>>> bv.file.virtual_path
+'Zip(.../papi_b64.zip)::Base64(papi_b64)::extracted'
+```
+
+This virtual path is also stored in the file's metadata for the 'Raw' BinaryView and can be accessed programmatically:
+
+```python
+>>> bv.parent_view.auto_metadata['container']
+{'chain': [{'transform': 'Zip'}, {'transform': 'Base64'}], 'virtualPath': 'Zip(.../papi_b64.zip)::Base64(papi_b64)::extracted'}
+```
+
+???+ Note "Note"
+     The virtual path and associated metadata are not persisted when saving to a database (`.bndb` file). Additionally, the format of the virtual path string may change in future releases.
+
+#### Settings
+
+The following settings control Container Browser behavior:
+
+- [`files.container.mode`](settings.md#files.container.mode): Controls container detection mode (Full/Interactive/Disabled)
+- [`files.container.autoOpen`](settings.md#files.container.autoOpen): Automatically opens files when there is exactly one extraction path with no required input
+- [`files.container.defaultPasswords`](settings.md#files.container.defaultPasswords): List of passwords to attempt for encrypted containers
+
+#### Adding Custom Container Support
+
+Binary Ninja's container system is extensible through the Transform API. Developers can create custom container decoders for proprietary or specialized formats. For information on implementing custom container transforms, see the [Container Transforms developer guide](../dev/containertransforms.md).
+
 ## Saving Files
 
 ![save choices >](../img/save-choices.png "Save Menu Choices"){ width="400" }
@@ -99,7 +178,7 @@ There are five menu items that can be used to save some combination of a raw fil
 
 ### 1. Save
 
-This menu is the only one bound to a hotkey by default and it is intended to be the "do what I probably want" option.
+This option is the only one bound to a hotkey by default, and it is intended to be the "do what I probably want" option.
 
     - If you have edited the contents of a file and have not yet confirmed the file name to save over, this will ask you to save the file contents and prompt for a file name (check the save dialog title text to confirm this).
     - If you have edited the file contents and _have_ previously specified the file name, this option will save those changes to that file without a prompt.
@@ -111,8 +190,8 @@ This menu is the only one bound to a hotkey by default and it is intended to be 
 
 "Save As" Will prompt to save the analysis database or just the file contents.
 
-    - If you choose to save the analysis database, it behaves similarly to "Save" above, except for the cases that save without prompt. In those cases, you will _always_ be prompted for a filename.
-    - If you choose to save the file contents only, you will be prompted for a filename to which to save the current contents of the binary view, including any modifications.
+    - If you choose to save an analysis database, you will be prompted for a file name, and a new database containing only a single new snapshot will be created.
+    - If you choose to save the file contents only, you will be prompted for a file name to which to save the current contents of the binary view, including any modifications.
 
 ### 3. Save All
 
@@ -130,9 +209,9 @@ This menu allows for saving a `.bndb` without additional undo information, or by
 
 ## New Files
 
-When you create a new file, you're given the [hex view](index.md#hex-view) of an empty file. From here you can manually type in hexadecimal or ascii values, or paste in data in a variety of ways. To type in hex, make sure the left-side is focused, to type in ascii, just focus the right-side using the mouse or the "tab" key. The only way to enter a tab character into the ascii section is to enter "09" in the hex side.
+When you create a new file, you're given the [hex view](index.md#hex-view) of an empty file. From here you can manually type in hexadecimal or ASCII values, or paste in data in a variety of ways. To type in hex, make sure the left-side is focused, to type in ASCII, just focus the right-side using the mouse or the "tab" key. The only way to enter a tab character into the ASCII section is to enter "09" in the hex side.
 
-To paste, right click anywhere in the view, select "Paste From," and choose whichever option matches the data you copied. For example, the string `\x01\x02\x03\x04` can be pasted as an Escape String, while `01020304` is Raw Hex.
+To paste, right click anywhere in the view, select "Paste From", and choose whichever option matches the data you copied. For example, the string `\x01\x02\x03\x04` can be pasted as an Escape String, while `01020304` is Raw Hex.
 
 From here, you can save the contents of your new binary to disk and reopen it for auto-analysis. Of course, you could also switch out of hex view into linear view and start creating functions directly.
 
@@ -161,13 +240,13 @@ The status of currently installed plugins will be displayed in the bottom right.
 
 ![plugin status ><](../img/plugin-status-widget.png "Plugin Status Widget"){ width="400" }
 
-Pressing each of the icons will navigate you to the the Plugin Manager with the corresponding filter:
+Pressing each of the icons will navigate you to the Plugin Manager with the corresponding filter:
 
 - Green Circle: `@installed`
 - Error Symbol: `@failed_to_load`
 - Update Icon: `@update_available`
 
-Pressing the gear or using the hotkeys (macOS: `[CMD+SHIFT] + M` , Windows/Linux: `[CTRL+SHIFT] + M`) will open the plugin manager with no filters so you can browse available plugins.
+Pressing the gear or using the hotkeys (macOS: `[CMD+SHIFT] + M`, Windows/Linux: `[CTRL+SHIFT] + M`) will open the plugin manager with no filters, so you can browse available plugins.
 
 ### Commercial/Ultimate Features
 
@@ -227,7 +306,7 @@ There's also [many](#using-the-keyboard) keyboard-based navigation options.
 Switching views happens multiple ways. In some instances, it is automatic, such as clicking a data reference from graph view. This will navigate to linear view as data is not shown in the graph view. While navigating, you can use the [view hotkeys](#default-hotkeys) to switch to a specific view at the same location as the current selection. Next you can use the [command palette](#command-palette). Additionally, the view menu in the header at the top of each pane can be used to change views without navigating to any given location. Finally, you can also use the `View` application menu.
 
 ???+ Tip "Tip"
-    Any loaded BinaryView will show up in the upper-left of the main pane. You can switch between (for example), `ELF` and `Raw` to switch between multiple loaded [BinaryViews](../dev/concepts.md#binary-views).
+    Any loaded `BinaryView` will show up in the upper-left of the main pane. You can switch between (for example), `ELF` and `Raw` to switch between multiple loaded [`BinaryView`s](../dev/concepts.md#binary-views).
 
 ## The Sidebar
 
@@ -259,7 +338,7 @@ The Symbol List shows the following columns by default:
 
 - `Name`: the [short name](https://api.binary.ninja/binaryninja.types-module.html#binaryninja.types.CoreSymbol) of the symbol (can be changed to the [raw name](https://api.binary.ninja/binaryninja.types-module.html#binaryninja.types.CoreSymbol) in the menu icon for the Symbol List)
 - `Address`: the virtual address for the symbol
-- `Kind`: may be one of "Folder", Function", "Data", and "Bare Symbol"
+- `Kind`: may be one of "Folder", "Function", "Data", and "Bare Symbol"
 - `Section`: the section of the binary the symbol appears in
 
 Additionally, the following columns are hidden by default and can be enabled by right-clicking the header:
@@ -298,7 +377,7 @@ The Types View can be used as a sidebar panel or as a pane in the main view. The
 
 ![tags ><](../img/tags.png "Tags"){ width="600" }
 
-The tags panel allows you to both change existing tag categories, add your own categories, and also review any existing tags or bookmarks. Bookmarks are just tags with default hotkeys bound to them for both setting them and navigating them. The default keybinding to set a bookmark is `[CTRL-ALT] 1` through `[CTRL-ALT] 0` representing Bookmarks 1-10. The default hotkeys for navigating them are `[CTRL] 1` through `[CTRL] 0`. See the [keybindings](#custom-hotkeys) section for information on changing the default keybindings.
+The Tags panel allows you to change existing tag categories, add your own categories, and also review any existing tags or bookmarks. Bookmarks are just tags with default hotkeys bound to them for both setting them and navigating them. The default keybinding to set a bookmark is `[CTRL-ALT] 1` through `[CTRL-ALT] 0` representing Bookmarks 1-10. The default hotkeys for navigating them are `[CTRL] 1` through `[CTRL] 0`. See the [keybindings](#custom-hotkeys) section for information on changing the default keybindings.
 
 ### Memory Map
 
@@ -306,7 +385,7 @@ The tags panel allows you to both change existing tag categories, add your own c
 
 The "Memory Map" pane and sidebar widget show segments and sections currently present in the binary, allows some modification of automatically added sections, and allows adding, modifying, and deleting user segments and sections.
 
-Double clicking an address in the "start" or "end" column will navigate in the address in the current view. If an address in the "Data Offset" column is double clicked, that address will always be navigated to in the `Raw` view which may be confusing at first.
+Double-clicking an address in the "start" or "end" column will navigate in the address in the current view. If an address in the "Data Offset" column is double-clicked, that address will always be navigated to in the `Raw` view which may be confusing at first.
 
 ![memory map icon <](../img/memory-map-icon.png "Memory Map Icon")
 
@@ -334,6 +413,13 @@ The Mini Graph only shows content when the currently selected main pane contains
 
 The Cross References view in the lower-left section of the sidebar shows all cross-references to the currently selected address, address range, variable or type. This pane will change depending on whether an entire line is selected (all cross-references to that address/type/variable are shown), or whether a specific token within the line is selected. For instance if you click on the symbol `memmove` in `call memmove` it will display all known cross-references to `memmove`, whereas if you click on the line the `call` instruction is on, you will only get cross-references to the address of the call instruction. Cross-references can be either incoming or outgoing, and they can be either data, code, type, or variable.
 
+When using the `X` hotkey, a [pinned cross-reference](#cross-reference-pinning) tab will be opened and the "Pinned Cross References" panel will be focused. [Some users](migrationguideida.md) may prefer a modal dialog, or the original Binary Ninja behavior of focusing the dynamic cross-reference window. This behavior can be changed either by adjusting the [ui.defaultXrefInterface](settings.md#ui.defaultXrefInterface) setting to `pinned`, `sidebar`, or `dialog` setting, OR by [changing the keybinding](#custom-hotkeys) for the appropriate command palette action:
+
+- `Focus Cross References`
+- `Pin Cross References` (opens a new tab in the existing Pinned Cross References dialog)
+- `Pin Cross References to New Pane`
+- `Cross References Dialog...`
+
 ![Cross References](../img/cross-reference-tree.png "xrefs"){ width="600" }
 
 #### Code References
@@ -346,7 +432,7 @@ Data References are references created _by_ data (i.e. pointers), not necessaril
 
 #### Variable References
 
-Variable References are all the set of uses of a given variable. As these references are intraprocedural we're able to show the currently viewed IL in the preview.
+Variable References are all the set of uses of a given variable. As these references are intra-procedural we're able to show the currently viewed IL in the preview.
 
 #### Type References
 
@@ -371,17 +457,19 @@ The first of the two drop down boxes allows the selection of incoming, outgoing,
 
 ![xrefs](../img/cross-reference-panel-pin.png "xrefs panel pin"){ width="600" }
 
-By default, Binary Ninja's cross-reference pane is dynamic, allowing quick navigation to relevant references. Sometimes you might rather have the current references stick around, so they can be used as a sort of work-list. This workflow is supported in four different ways. First is the `Pin` checkbox (which is only visible if the `Filter` drop-down is open). This prevents the list of cross-references from being updated even after the current selection is changed.
+By default, Binary Ninja's cross-reference pane is dynamic, allowing quick navigation to relevant references. Sometimes you might rather have the current references stick around, so they can be used as a sort of work-list. This workflow is supported in many different ways. 
 
-Alternatively clicking the `Pin Cross References to New Pane` button at the top right of the cross references pane in the sidebar, selecting `Pin Cross References` in the context menu or command palette, or using the `SHIFT+X` shortcut pops up a `Pinned Cross References` pane. This pane has a static address range which can only be updated through the `Pin Cross References` action. The third way would be to select (or multi-select in table view) a set of cross-references then right-click `Tag Selected Rows`. The tag pane can then be used to navigate those references. Tags allow for persistent lists to be saved to an analysis database whereas the other options only last for the current session.
+1. First is the `Pin` checkbox (which is only visible if the `Filter` drop-down is open). This prevents the list of cross-references from being updated even after the current selection is changed.
+1. Second, you can clicking the `Pin Cross References to New Pane` button at the top right of the cross references pane in the sidebar.
+1. Third, you can use the `X` hotkey or select `Pin Cross References` in the context menu or command palette. 
+1. The final way is to select (or multi-select in table view) a set of cross-references then right-click `Tag Selected Rows`. The tag pane can then be used to navigate those references. Tags allow for persistent lists to be saved to an analysis database whereas the other options only last for the current session.
 
 ???+ Tip "Tip"
-    The dynamic cross-reference pane limits the number of references that are displayed at one time to keep the user interface responsive. If the list of references is not complete, a `+` will appear next to the count of references. Clicking the `Pin Cross References to New Pane` button will increase the limit substantially and allow you to see the missing references. The limits for both the dynamic pane and the pinned references can be controlled in the settings.
+    The dynamic cross-reference pane limits the number of references that are displayed at one time to keep the user interface responsive. If the list of references is not complete, a `+` will appear next to the count of references. Clicking the `Pin Cross References to New Pane` button will increase the limit substantially and allow you to see the missing references. The limits for both the dynamic pane and the pinned references can be controlled in [settings](settings.md#ui.maxXrefItems).
 
 #### Cross-Reference Hotkeys
 
-* `x` - Focus the cross-references pane
-* `[SHIFT] x` Create a new pinned cross-references pane
+* `x` - Create a new pinned cross-references pane
 * `[OPTION/ALT] x` - Navigate to the next cross-reference
 * `[OPTION/ALT-SHIFT] x` - Navigate to the previous cross-reference
 
@@ -426,7 +514,7 @@ The Stack sidebar panel shows the currently selected function's stack layout. Yo
 
 The History sidebar panel shows all annotations made during the history of a database. Note that even changes made prior to the introduction of the UI will be shown. This not only makes it easier to see what changes have been made, but allows you to right-click and revert to a particular point in analysis. Additionally, the right-click menu includes a toggle to hide or show the date of the change.
 
-Note that when plugins or the UI batch multiple changes in one action, they wil be summarized with a count of actions but no further details are possible.
+Note that when plugins or the UI batch multiple changes in one action, they will be summarized with a count of actions but no further details are possible.
 
 There is currently no support for branching/forking style of history at this time.
 
@@ -446,7 +534,7 @@ The normal find dialog also exists as a sidebar panel that allows persistent, ta
 
 The search types are available from a drop-down next to the text input field and include:
 
- - Advanced Binary Search: A new search type using the [bv.search](https://dev-api.binary.ninja/binaryninja.binaryview-module.html#binaryninja.binaryview.BinaryView.search) syntax (supporting regular expressions and wildcard hex strings)
+ - Advanced Binary Search: A new search type using the [bv.search](https://api.binary.ninja/binaryninja.binaryview-module.html#binaryninja.binaryview.BinaryView.search) syntax (supporting regular expressions and wildcard hex strings)
  - Escaped: Escaped strings such as `OneString\x09\Tabsx09Another`
  - Hex: All values much be valid hex characters such as `ebfffc390` and the bytes will only be searched for in this particular order
  - Raw: A simple string search that matches the exact string as specified
@@ -457,7 +545,7 @@ The search types are available from a drop-down next to the text input field and
 
 ![Logs](../img/logs.png "Logs"){ width="700" }
 
-The log window lets you search and filter through logs. You can search by text or filter by loggers to identify messages of interest. By default, only the logs for a specific BinaryView that's open as well as any Global logs will show up but this setting can either be changed through the right-click menu or the drop down menu in the upper-right of the log window.
+The log window lets you search and filter through logs. You can search by text or filter by loggers to identify messages of interest. By default, only the logs for a specific `BinaryView` that's open as well as any Global logs will show up, but this setting can either be changed through the right-click menu or the drop-down menu in the upper-right of the log window.
 
 ### Hidden Sidebar Icons
 
@@ -538,7 +626,7 @@ To search in the keybindings list, just click to make sure it's focused and star
  - `a` : Change the data type to an ASCII string
  - `[SHIFT] a` : Change the data type to a `wchar_t` string
  - `[OPT-SHIFT] a` (macOS) : Change the data type to a `wchar32_t` string
- - `[CTRL-SHIFT] a`  (Windows/Linux) : Change the data type to a `wchar32_t` string
+ - `[CTRL-SHIFT] a` (Windows/Linux) : Change the data type to a `wchar32_t` string
  - `1`, `2`, `4`, `8` : Change type directly to a data variable of the indicated widths
  - `f` : Switch data variable between floating point types of varying precision
  - `d` : Switch between data variables of various widths
@@ -632,7 +720,7 @@ using the [`corePlugins.triage`](settings.md#corePlugins.triage) setting.
 ### 1. Entropy
 
 This image shows the overall entropy of the file. Brighter areas indicate regions of higher entropy
-(encrypted, compressed, etc), while darker regions indicate places of lower entropy. You can click anywhere in the
+(encrypted, compressed, etc.), while darker regions indicate places of lower entropy. You can click anywhere in the
 entropy map to navigate to that location in your default view.
 
 ### 2. File Info
@@ -642,8 +730,8 @@ it into your clipboard.
 
 ### 3. Headers
 
-This section appears only in BinaryViews and the exact information depends on the view itself. PE headers
-are the most detailed and include such items as checksums, characterstics, and compiler strings. Addresses that
+This section appears only in `BinaryView`s and the exact information depends on the view itself. PE headers
+are the most detailed and include such items as checksums, characteristics, and compiler strings. Addresses that
 existing in the virtual memory space of the file can be clicked to navigate to that location.
 
 ### 4. Base Address Detection (BASE)
@@ -652,8 +740,8 @@ existing in the virtual memory space of the file can be clicked to navigate to t
 
 The Base Address Scan Engine (or BASE) is used to automatically identify load addresses for embedded files or
 other formats where the load address isn't known and the file isn't relocatable. BASE is only visible in the triage
-summary when the file doesn't specify a load address such as a raw or mapped file. For BinaryViews like PE or MachO,
-switching the view in the upper-left from the BinaryView name to `raw` will force the BASE UI to show up in the
+summary when the file doesn't specify a load address such as a raw or mapped file. For `BinaryView`s like PE or Mach-O,
+switching the view in the upper-left from the `BinaryView` name to `raw` will force the BASE UI to show up in the
 Triage Summary.
 
 See our recent [blog
@@ -692,7 +780,7 @@ clickable to navigate to the virtual address.
 
 ### 8. Strings
 
-Strings can be double clicked to navigate to them, and the table can be sorted or the list filtered by
+Strings can be double-clicked to navigate to them, and the table can be sorted or the list filtered by
 typing in the search box.
 
 ## Byte Overview
@@ -703,8 +791,8 @@ The Byte Overview (or "Bytes" when selected in the view switcher) shows the bina
 top-level selection) as a [Code Page 437](https://en.wikipedia.org/wiki/Code_page_437) view. This view is commonly used
 by malware analysis researchers using the [Hiew](http://hiew.ru) tool.
 
-While this view is less featureful than the Hex view, it allows for a much higher information density as every byte is
-represented by one character as opposted to four total characters when in Hex view (including the space between hex
+While this view is less feature-rich than the Hex view, it allows for a much higher information density as every byte is
+represented by one character as opposed to four total characters when in Hex view (including the space between hex
 digits and the ASCII representation).
 
 ## Hex View
@@ -829,7 +917,7 @@ is shown below:
 
 ![Expression Folding](../img/folding-before.png "Expression Folding"){ width="500" }
 
-Binary Ninja uses heuristics to determine if optimizatoins will improve readability, but sometimes it doesn't make the
+Binary Ninja uses heuristics to determine if optimizations will improve readability, but sometimes it doesn't make the
 preferred choice. In the case above, you can override the heuristic by right-clicking the inner call expression and
 choosing "Allow" or "Prevent" from the "Expression Folding" submenu.
 
@@ -858,7 +946,7 @@ this feature are shown in the table below:
 
 ## Merging and Splitting Variables
 
-Binary Ninja automatically splits all variables that the analysis determines to be safely splittable. This allows the user to assign different types to different uses of the same register or memory location. Sometimes, however, the code is more clear if two or more of these variables are merged together into a single variable.
+Binary Ninja automatically splits all variables that the analysis determines to be safely split. This allows the user to assign different types to different uses of the same register or memory location. Sometimes, however, the code is more clear if two or more of these variables are merged together into a single variable.
 
 ### Merge Variable Here
 
@@ -897,7 +985,7 @@ variable at a definition site and selecting "Split Variable at Definition" from 
     cases.
 
 Manually split variables will initially provide the selected definition as a separate variable, and all other
-definitions will be automatically resolved into one or more other variables. If some of the definitions should
+definitions will be automatically resolved into one or more other variables. If some definitions should
 have been included as part of the same variable, use "Merge Variables..." from the context menu after splitting
 to select which of the other definitions should be merged.
 
@@ -961,14 +1049,14 @@ The interactive python prompt also has several built-in "magic" functions and va
 - `current_il_instruction`: the current IL instruction. It can be LLIL/MLIL/HLIL depending on which one is shown in the UI
 - `current_il_function`: the current IL function. It can be LLIL/MLIL/HLIL depending on which one is shown in the UI
 - `current_il_basic_block`: the current IL basic block. It can be LLIL/MLIL/HLIL depending on which one is shown in the UI
-- `current_token`: the current selected [`InstructionTextToken`](https://api.binary.ninja/binaryninja.architecture-module.html#binaryninja.architecture.InstructionTextToken). None if no token is selected
-- `current_data_var`: the current selected [`DataVariable`](https://api.binary.ninja/binaryninja.binaryview-module.html#binaryninja.binaryview.DataVariable). None if no data variable is selected
-- `current_sections`: the list of [`Section`](https://api.binary.ninja/binaryninja.binaryview-module.html#binaryninja.binaryview.Section)s that the current address is in. This the list can be empty
-- `current_segment`: the [`Segment`](https://api.binary.ninja/binaryninja.binaryview-module.html#binaryninja.binaryview.Segment) that the current address is in.
+- `current_token`: the current selected [`InstructionTextToken`](https://api.binary.ninja/binaryninja.architecture-module.html#binaryninja.architecture.InstructionTextToken) (`None` if no token is selected)
+- `current_data_var`: the current selected [`DataVariable`](https://api.binary.ninja/binaryninja.binaryview-module.html#binaryninja.binaryview.DataVariable) (`None` if no data variable is selected)
+- `current_sections`: the list of [`Section`](https://api.binary.ninja/binaryninja.binaryview-module.html#binaryninja.binaryview.Section)s that the current address is in (This list can be empty)
+- `current_segment`: the [`Segment`](https://api.binary.ninja/binaryninja.binaryview-module.html#binaryninja.binaryview.Segment) that the current address is in
 - `current_comment`: the comment at the current address. Writing to it sets comment at the current address
-- `current_symbol`: the [`Symbol`](https://api.binary.ninja/binaryninja.types-module.html#binaryninja.types.Symbol) at the current address. None if there is no symbol
+- `current_symbol`: the [`Symbol`](https://api.binary.ninja/binaryninja.types-module.html#binaryninja.types.Symbol) at the current address (`None` if there is no symbol)
 - `current_symbols`: the list of [`Symbol`](https://api.binary.ninja/binaryninja.types-module.html#binaryninja.types.Symbol)s at the current address
-- `current_var`: the current selected [`Variable`](https://api.binary.ninja/binaryninja.variable-module.html?highlight=variable#binaryninja.variable.Variable) in a function. Not to be confused with `current_data_var`
+- `current_var`: the current selected [`Variable`](https://api.binary.ninja/binaryninja.variable-module.html?highlight=variable#binaryninja.variable.Variable) in a function (Not to be confused with `current_data_var`)
 - `current_ui_context`: the current [`UIContext`](https://api.binary.ninja/cpp/class_u_i_context.html)
 - `current_ui_view_frame`: the current [`ViewFrame`](https://api.binary.ninja/cpp/class_view_frame.html)
 - `current_ui_view`: the current [`View`](https://api.binary.ninja/cpp/class_view.html)
@@ -1027,8 +1115,8 @@ For more detailed information on using plugins, see the [plugin guide](plugins.m
 Binary Ninja supports loading PDB files through a built-in PDB loader. It will automatically search for a corresponding PDB file whenever you load a Windows executable or library that was compiled with a PDB. The PDB loader will search a variety of places for PDBs, in the following order, if the files exist and match the GUID in the analyzed file:
 
 1. Look in symbol servers defined in the `_NT_SYMBOL_PATH` environment variable, as defined by [Microsoft's documentation](https://learn.microsoft.com/en-us/windows/win32/debug/using-symsrv).
-2. Look for the file at the path specified in the loaded binary. E.g. when `C:\Users\foo\foo.exe` was compiled, it stored `C:\Users\foo\foo.pdb` as metadata inside `foo.exe`, so `C:\Users\foo\foo.pdb` will be loaded if it exists (and matches the guid).
-3. Look in the same directory as the opened file/bndb (e.g. If you have opened `C:\foo.exe` or `C:\foo.bndb`, the PDB plugin looks for `C:\foo.pdb`)
+2. Look for the file at the path specified in the loaded binary. E.g. when `C:\Users\foo\foo.exe` was compiled, it stored `C:\Users\foo\foo.pdb` as metadata inside `foo.exe`, so `C:\Users\foo\foo.pdb` will be loaded if it exists (and matches the GUID).
+3. Look in the same directory as the opened file/BNDB (e.g. If you have opened `C:\foo.exe` or `C:\foo.bndb`, the PDB plugin looks for `C:\foo.pdb`)
 4. Look in the local symbol store. This is the directory specified by `pdb.files.localStoreAbsolute` in the settings, if it exists. Otherwise, this is a folder relative to the Binary Ninja user directory, specified by the `pdb.files.localStoreRelative` setting (and possibly the `BN_USER_DIRECTORY` environment variable). This directory has the structure `<symbol store>\foo.pdb\<guid>\foo.pdb`, equivalent to a regular symbol server.
 5. Attempt to connect and download the PDB from the list of symbol servers specified in setting `pdb.files.symbolServerList`, in order.
 
@@ -1048,15 +1136,18 @@ The PDB loader comes with a couple configuration options which enable and disabl
 
 ## Launching Binary Ninja from the command line (CLI)
 
-When you launch Binary Ninja from the command-line, you can control whether or not a new window is launched or an existing window is used.
+When you launch Binary Ninja from the command-line, you can control whether a new window is launched or an existing window is used.
 
 * Running Binary Ninja from the command line will try to find a running instance of the same version in which to open any files or URLs passed on the command line, or activate the main window if no arguments are provided.
-* For users whose workflow involves running Binary Ninja from a shell, just running `binaryninja` will try to activate a running instance, and if it does, return you to your shell. Otherwise it will launch a new instance of Binary Ninja.
+* For users whose workflow involves running Binary Ninja from a shell, just running `binaryninja` will try to activate a running instance, and if it does, return you to your shell. Otherwise, it will launch a new instance of Binary Ninja.
 * Running `binaryninja` with a file path (or paths), like `binaryninja /bin/ls /bin/cat`, will
     1. Try to activate and focus existing tabs for those files in a running instance, or failing that,
     2. Try to open those files in new tabs in a running instance, or failing that,
     3. Open those files in a new instance of Binary Ninja.
 * Passing the `-n` or `--new-instance` command line argument will cause a new Binary Ninja application to be launched and any files or URLs on the command line will be opened in the new instance.
+
+???+ Danger "Warning"
+    Due to [bug](https://github.com/Vector35/binaryninja-api/issues/7523) on macOS, the above behavior is only correct for Windows and Linux. On macOS, the default behavior is to always launch a new window.
 
 ## Debugger
 
@@ -1074,7 +1165,6 @@ Updates are silently downloaded in the background and when complete an option to
 
 On Windows, this is achieved through a separate launcher that loads first and replaces the installation before launching the new version which you'll notice as a separate window. On macOS and Linux, the original installation is overwritten after the update occurs as these operating systems allow files to be replaced while running. The update on restart is thus immediate.
 
-Note
 ???+ Tip "Tip"
     If you have any trouble with the self-updater, you can always [request](https://binary.ninja/recover/) a fresh set of download links as long as you are under active support.
 

@@ -1,13 +1,15 @@
 site_name: 'Binary Ninja User Documentation'
+site_description: 'Documentation for the Binary Ninja reverse engineering platform'
+site_author: 'Vector 35 Inc'
+copyright: '(<a href="https://creativecommons.org/licenses/by/3.0/">cc</a>) <a href="https://vector35.com/">Vector 35 Inc</a>'
 dev_addr: 0.0.0.0:8000
 site_url: 'https://docs.binary.ninja/'
 repo_url: 'https://binary.ninja/'
 repo_name: 'binary.ninja'
-site_description: 'Documentation for the Binary Ninja reverse engineering platform'
-site_author: 'Vector 35 Inc'
 use_directory_urls: false
 extra_css: ['docs.css', 'github.min.css', 'juxtapose.min.css']
 extra_javascript: ['highlight.min.js', 'cpp.min.js', 'python.min.js', 'juxtapose.min.js', 'tabsync.js']
+
 theme:
     name: material
     custom_dir: overrides
@@ -49,8 +51,6 @@ theme:
         next: 78     # n
         previous: 80 # p
         search: 191   # ? / /
-
-        copyright: '(<a href="https://creativecommons.org/licenses/by/3.0/">cc</a>) <a href="https://vector35.com/">Vector 35 Inc</a>'
 
 plugins:
     - search:
@@ -111,7 +111,9 @@ nav:
         - Migration Guide:
             - 'guide/migration/index.md'
             - Migrating from IDA: 'guide/migration/migrationguideida.md'
-            - Migrating from Ghidra: 'guide/migration/migrationguideghidra.md'
+            - Migrating from Ghidra:
+                - 'guide/migration/ghidra/index.md'
+                - Ghidra Import: 'guide/migration/ghidra/ghidraimport.md'
         - Types:
             - 'guide/types/index.md'
             - Basic Types: 'guide/types/basictypes.md'
@@ -127,6 +129,7 @@ nav:
         - 'dev/index.md'
         - Cookbook: 'dev/cookbook.md'
         - Writing Plugins: 'dev/plugins.md'
+        - Container Transforms: 'dev/containertransforms.md'
         - Automation: 'dev/batch.md'
         - BNIL / Architectures:
             - BNIL Guide&#58; Overview: 'dev/bnil-overview.md'
@@ -140,6 +143,7 @@ nav:
             - Type Libraries: 'dev/typelibraries.md'
         - Important Concepts:
             - 'dev/concepts.md'
+            - Outlining: 'dev/outlining.md'
             - User Informed Data Flow: 'dev/uidf.md'
             - Workflows: 'dev/workflows.md'
         - Creating Themes: 'dev/themes.md'

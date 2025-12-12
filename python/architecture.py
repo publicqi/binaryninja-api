@@ -86,9 +86,9 @@ class BasicBlockAnalysisContext:
     _translate_tail_calls: bool
     _disallow_branch_to_string: bool
     _max_function_size: int
-    _max_size_reached: bool
 
     # In/Out
+    _max_size_reached: bool
     _contextual_returns: Dict["function.ArchAndAddr", bool]
 
     # Out
@@ -230,6 +230,17 @@ class BasicBlockAnalysisContext:
         """Get boolean that indicates if the maximum function size has been reached."""
 
         return self._max_size_reached
+
+    @max_size_reached.setter
+    def max_size_reached(self, value: bool) -> None:
+        """Set boolean that indicates if the maximum function size has been reached.
+
+        :param bool value: The new value for max_size_reached
+        """
+        if not isinstance(value, bool):
+            raise TypeError("value must be a boolean")
+
+        self._max_size_reached = value
 
     @property
     def contextual_returns(self) -> Dict["function.ArchAndAddr", bool]:
@@ -387,6 +398,7 @@ class BasicBlockAnalysisContext:
                 halted_addresses[i].address = loc.addr
             core.BNAnalyzeBasicBlocksContextSetHaltedDisassemblyAddresses(self._handle, halted_addresses, total)
 
+        self._handle.maxSizeReached = ctypes.c_bool(self._max_size_reached)
         if self._contextual_returns_dirty:
             total = len(self._contextual_returns)
             values = (ctypes.c_bool * total)()
@@ -3196,6 +3208,7 @@ class InstructionTextToken:
 		CommentToken               Comments
 		TypeNameToken              **Not emitted by architectures**
 		AddressSeparatorToken      **Not emitted by architectures**
+		NewLineToken               New lines
 		========================== ============================================
 
 	"""
@@ -3223,7 +3236,10 @@ class InstructionTextToken:
 			token_type = InstructionTextTokenType(tokens[j].type)
 			text = tokens[j].text
 			if not isinstance(text, str):
-				text = text.decode("utf-8")
+				try:
+					text = text.decode("utf-8")
+				except UnicodeDecodeError:
+					text = text.decode("charmap")
 			width = tokens[j].width
 			value = tokens[j].value
 			size = tokens[j].size

@@ -21,11 +21,11 @@ pub struct Project {
 }
 
 impl Project {
-    pub(crate) unsafe fn from_raw(handle: NonNull<BNProject>) -> Self {
+    pub unsafe fn from_raw(handle: NonNull<BNProject>) -> Self {
         Project { handle }
     }
 
-    pub(crate) unsafe fn ref_from_raw(handle: NonNull<BNProject>) -> Ref<Self> {
+    pub unsafe fn ref_from_raw(handle: NonNull<BNProject>) -> Ref<Self> {
         Ref::new(Self { handle })
     }
 
@@ -97,7 +97,7 @@ impl Project {
     }
 
     /// Set the name of the project
-    pub fn set_name(&self, value: &str) {
+    pub fn set_name(&self, value: &str) -> bool {
         let value = value.to_cstr();
         unsafe { BNProjectSetName(self.handle.as_ptr(), value.as_ptr()) }
     }
@@ -108,7 +108,7 @@ impl Project {
     }
 
     /// Set the description of the project
-    pub fn set_description(&self, value: &str) {
+    pub fn set_description(&self, value: &str) -> bool {
         let value = value.to_cstr();
         unsafe { BNProjectSetDescription(self.handle.as_ptr(), value.as_ptr()) }
     }
@@ -130,12 +130,12 @@ impl Project {
     }
 
     /// Removes the metadata associated with this `key` from the project
-    pub fn remove_metadata(&self, key: &str) {
+    pub fn remove_metadata(&self, key: &str) -> bool {
         let key_raw = key.to_cstr();
         unsafe { BNProjectRemoveMetadata(self.handle.as_ptr(), key_raw.as_ptr()) }
     }
 
-    pub fn push_folder(&self, file: &ProjectFolder) {
+    pub fn push_folder(&self, file: &ProjectFolder) -> bool {
         unsafe { BNProjectPushFolder(self.handle.as_ptr(), file.handle.as_ptr()) }
     }
 
@@ -288,7 +288,7 @@ impl Project {
         }
     }
 
-    pub fn push_file(&self, file: &ProjectFile) {
+    pub fn push_file(&self, file: &ProjectFile) -> bool {
         unsafe { BNProjectPushFile(self.handle.as_ptr(), file.handle.as_ptr()) }
     }
 
@@ -612,7 +612,7 @@ impl Project {
     /// }
     /// ```
     // NOTE mut is used here, so only one lock can be acquired at once
-    pub fn bulk_operation(&mut self) -> Result<ProjectBulkOperationLock, ()> {
+    pub fn bulk_operation(&mut self) -> Result<ProjectBulkOperationLock<'_>, ()> {
         Ok(ProjectBulkOperationLock::lock(self))
     }
 }

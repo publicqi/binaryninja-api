@@ -208,7 +208,6 @@ QWidget* KCTriageView::initImageTable()
 
 		QAction noSelectionAction("No Images Selected", m_imageTable);
 		QAction loadImagesAction("", m_imageTable);
-		QAction loadImagesWithDepsAction("", m_imageTable);
 		if (selectedCount == 0)
 		{
 			noSelectionAction.setEnabled(false);
@@ -223,14 +222,6 @@ QWidget* KCTriageView::initImageTable()
 				loadImagesWithAddr(addresses, false);
 			});
 			contextMenu.addAction(&loadImagesAction);
-
-			// Format action text for loading selected images with dependencies
-			QString loadWithDepsActionText = (selectedCount == 1) ? "Load Selected Image and Dependencies" : QString("Load %1 Selected Images and Dependencies").arg(selectedCount);
-			loadImagesWithDepsAction.setText(loadWithDepsActionText);
-			connect(&loadImagesWithDepsAction, &QAction::triggered, [this, addresses]() {
-				this->loadImagesWithAddr(addresses, true);
-			});
-			contextMenu.addAction(&loadImagesWithDepsAction);
 		}
 
 		contextMenu.exec(m_imageTable->viewport()->mapToGlobal(pos));
@@ -298,6 +289,7 @@ QWidget* KCTriageView::initImageTable()
 	m_imageTable->setSelectionBehavior(QAbstractItemView::SelectRows);
 	m_imageTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
+	m_imageTable->sortByColumn(0, Qt::AscendingOrder);
 	m_imageTable->setSortingEnabled(true);
 
 	m_imageTable->verticalHeader()->setVisible(false);
@@ -454,4 +446,8 @@ void KCTriageView::RefreshData()
 		setImageLoaded(loadedImg.headerVirtualAddress);
 
 	m_symbolTable->populateSymbols(*m_data);
+
+	// Reapply the current sort after repopulating the model
+	// TODO: This should use `QSortFilterProxyModel`, but that's a bigger change.
+	m_imageTable->setSortingEnabled(true);
 }
